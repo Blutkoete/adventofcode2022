@@ -38,7 +38,7 @@ def day03_main(input_path=None):
     """
     Solve day 03 of Advent of Code 2022.
     :param input_path: Path to the input data. If None, attempt to autodetect the path from this Python file name.
-    :return:
+    :return: None.
     """
     sum_of_priorities_misplaced_items = 0
     sum_of_priorities_groups = 0
