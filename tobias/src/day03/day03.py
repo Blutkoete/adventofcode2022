@@ -44,13 +44,14 @@ def day03_main(input_path=None):
     sum_of_priorities_groups = 0
     group_lines = []
     for line in get_aoc_input(file_path=input_path):
-        # Day 1
+        # Part 1
         first_compartment = line[:(len(line)//2)]
         second_compartment = line[(len(line)//2):]
         for item in first_compartment:
             if second_compartment.find(item) >= 0:
                 sum_of_priorities_misplaced_items += get_item_priority(item)
                 break
+        # Part 2
         group_lines.append(line)
         if len(group_lines) == 3:
             for item in group_lines[0]:
