@@ -46,7 +46,7 @@ def play_round_part_two(combination):
     return score
 
 
-def day01_main(input_path):
+def day02_main(input_path):
     with open(input_path) as input_file:
         score_part1 = 0
         score_part2 = 0
@@ -58,5 +58,5 @@ def day01_main(input_path):
 
 
 if __name__ == '__main__':
-    day01_main(os.path.abspath('../../data/day02/input'))
+    day02_main(os.path.abspath('../../data/day02/input'))
 
