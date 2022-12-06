@@ -117,7 +117,7 @@ def parse_and_apply_input(current_solution, line):
 
 def day05_main(input_path=None):
     """
-    Solve day 04 of Advent of Code 2022.
+    Solve day 05 of Advent of Code 2022.
     :param input_path: Path to the input data. If None, attempt to autodetect the path from this Python file name.
     :return: None.
     """
