@@ -1,1 +1,4 @@
 .idea/
+src/day06/cmake-build-debug/
+src/day06/CMakeLists.txt
+src/day06/day06_noset.cpp
