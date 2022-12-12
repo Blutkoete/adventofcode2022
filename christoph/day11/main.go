@@ -9,19 +9,20 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ncw/gmp"
+	"math/big"
+
 	progressbar "github.com/schollz/progressbar/v3"
 )
 
-var zero = gmp.NewInt(0)
+var zero = big.NewInt(0)
 
 type Monkey struct {
 	Index            int
-	Items            []*gmp.Int
+	Items            []*big.Int
 	Operation        string
-	OperationValue   *gmp.Int
+	OperationValue   *big.Int
 	OperationWithOld bool
-	TestDivisor      *gmp.Int
+	TestDivisor      *big.Int
 	TestTrueMonkey   int
 	TestFalseMonkey  int
 	InspectionCount  int64
@@ -37,7 +38,7 @@ func main() {
 func calculate(file string, iterations int, divideByThree bool) {
 	fmt.Printf("Calculating Monkey Business for %s %d\n", file, iterations)
 	lines := readInput(file)
-	monkeys := parseMonkeys(lines)
+	monkeys, bcd := parseMonkeys(lines)
 	bar := progressbar.Default(int64(iterations))
 	for i := 0; i < iterations; i++ {
 		//fmt.Printf("Iteration %d\n", i)
@@ -49,10 +50,13 @@ func calculate(file string, iterations int, divideByThree bool) {
 				//fmt.Printf("  Monkey inspects an item with a worry level of %d.\n", item)
 				inspection := updateWorry(item, monkey)
 				if divideByThree {
-					inspection = inspection.Div(inspection, gmp.NewInt(3))
+					inspection = inspection.Div(inspection, big.NewInt(3))
+				} else if inspection.Cmp(big.NewInt(bcd)) >= 1 {
+					inspection = inspection.Mod(inspection, big.NewInt(bcd))
 				}
+
 				//fmt.Printf("    Monkey gets bored with item. Worry level is divided by 3 to %d.\n", inspection)
-				modulus := gmp.NewInt(0)
+				modulus := big.NewInt(0)
 				modulus.Mod(inspection, monkey.TestDivisor)
 				if modulus.Uint64() == 0 {
 					//fmt.Printf("    Current worry level is divisible by %d.\n", monkey.TestDivisor)
@@ -64,7 +68,7 @@ func calculate(file string, iterations int, divideByThree bool) {
 					monkeys[monkey.TestFalseMonkey].Items = append(monkeys[monkey.TestFalseMonkey].Items, inspection)
 				}
 			}
-			monkey.Items = make([]*gmp.Int, 0)
+			monkey.Items = make([]*big.Int, 0)
 		}
 	}
 	values := make([]int, 0)
@@ -78,7 +82,7 @@ func calculate(file string, iterations int, divideByThree bool) {
 	fmt.Println("-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-")
 }
 
-func updateWorry(initialConcern *gmp.Int, monkey *Monkey) *gmp.Int {
+func updateWorry(initialConcern *big.Int, monkey *Monkey) *big.Int {
 	if monkey.Operation == "+" {
 		if monkey.OperationWithOld {
 			initialConcern.Add(initialConcern, initialConcern)
@@ -103,8 +107,9 @@ func updateWorry(initialConcern *gmp.Int, monkey *Monkey) *gmp.Int {
 	}
 }
 
-func parseMonkeys(lines []string) []*Monkey {
+func parseMonkeys(lines []string) ([]*Monkey, int64) {
 	monkeys := make([]*Monkey, 0)
+	bcd := 1
 	var currentMonkey *Monkey
 	for _, line := range lines {
 		if strings.HasPrefix(line, "Monkey") {
@@ -116,9 +121,9 @@ func parseMonkeys(lines []string) []*Monkey {
 				Index:            index,
 				InspectionCount:  0,
 				Operation:        "",
-				OperationValue:   gmp.NewInt(0),
+				OperationValue:   big.NewInt(0),
 				OperationWithOld: false,
-				TestDivisor:      gmp.NewInt(0),
+				TestDivisor:      big.NewInt(0),
 				TestTrueMonkey:   0,
 				TestFalseMonkey:  0,
 			}
@@ -126,11 +131,11 @@ func parseMonkeys(lines []string) []*Monkey {
 		} else if strings.HasPrefix(line, "  Starting items: ") {
 			itemsStr := line[17:]
 			itemsArray := strings.Split(itemsStr, ", ")
-			items := make([]*gmp.Int, 0)
+			items := make([]*big.Int, 0)
 			for _, itemStr := range itemsArray {
 				itemConcern, err := strconv.Atoi(strings.TrimSpace(itemStr))
 				checkError(err)
-				items = append(items, gmp.NewInt(int64(itemConcern)))
+				items = append(items, big.NewInt(int64(itemConcern)))
 			}
 			currentMonkey.Items = items
 		} else if strings.HasPrefix(line, "  Operation: new = old ") {
@@ -140,7 +145,7 @@ func parseMonkeys(lines []string) []*Monkey {
 			if opsParts[1] != "old" {
 				number, err := strconv.Atoi(strings.TrimSpace(opsParts[1]))
 				checkError(err)
-				currentMonkey.OperationValue = gmp.NewInt(int64(number))
+				currentMonkey.OperationValue = big.NewInt(int64(number))
 				currentMonkey.OperationWithOld = false
 			} else {
 				currentMonkey.OperationWithOld = true
@@ -149,7 +154,8 @@ func parseMonkeys(lines []string) []*Monkey {
 			divisorStr := line[21:]
 			divisor, err := strconv.Atoi(strings.TrimSpace(divisorStr))
 			checkError(err)
-			currentMonkey.TestDivisor = gmp.NewInt(int64(divisor))
+			bcd = bcd * divisor
+			currentMonkey.TestDivisor = big.NewInt(int64(divisor))
 		} else if strings.HasPrefix(line, "    If true: throw to monkey ") {
 			numberStr := line[29:]
 			number, err := strconv.Atoi(strings.TrimSpace(numberStr))
@@ -164,7 +170,7 @@ func parseMonkeys(lines []string) []*Monkey {
 			fmt.Printf("Unrecognized command '%s'\n", line)
 		}
 	}
-	return monkeys
+	return monkeys, int64(bcd)
 }
 
 func checkError(err error) {
