@@ -11,13 +11,14 @@ import (
 var drawChamberSwitch bool = false
 
 func main() {
-	part1("input.txt") // 3105 too high, should be 3048
+	solve("example.txt", 2022)
+	solve("input.txt", 2022)
 }
 
-func part1(file string) {
+func solve(file string, numberOfRocks int) {
 	newRockYOffset := 3
 	newRockXOffset := 2
-	numberOfRocks := 2022
+
 	rocks := rockGenerator()
 	wind := readInput(file)
 	chamber := make([][]int, 0)
@@ -62,7 +63,7 @@ func part1(file string) {
 	}
 
 	//drawChamber(chamber)
-	fmt.Printf("currentHeight %d\n", getCurrentHeight(chamber))
+	fmt.Printf("height %d after %d rocks\n", getCurrentHeight(chamber), numberOfRocks)
 }
 
 func padChamberWithEmptySpace(chamber [][]int, targetHeight int) [][]int {
